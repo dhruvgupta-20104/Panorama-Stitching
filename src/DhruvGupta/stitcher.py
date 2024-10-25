@@ -23,11 +23,10 @@ class PanaromaStitcher():
         homography_matrix_list = []
 
         base_img = img_list[-1]
-        base_img_kp, base_img_des = self.get_keypoints(base_img)
 
         for img_index in range(len(img_list)-2, -1, -1):
 
-            print("base_img_kp: ", base_img_kp)
+            print("-------------------------------------------")
 
             right_img = base_img
             left_img = img_list[img_index]
@@ -35,12 +34,11 @@ class PanaromaStitcher():
             print("LOG: Stitching Image {} to the base image".format(img_index))
             
             kp_left, des_left = self.get_keypoints(left_img)
-            # kp_right, des_right = self.get_keypoints(right_img)
+            kp_right, des_right = self.get_keypoints(right_img)
 
             print("LOG: Got Keypoints")
 
-            # matched_points = self.get_matched_points(kp_left, des_left, kp_right, des_right)
-            matched_points = self.get_matched_points(kp_left, des_left, base_img_kp, base_img_des)
+            matched_points = self.get_matched_points(kp_left, des_left, kp_right, des_right)
 
             print("LOG: Got Matched Points")
 
@@ -68,8 +66,6 @@ class PanaromaStitcher():
             output_img[-y_min:right_image_shape[0]-y_min, -x_min:right_image_shape[1]-x_min] = right_img
 
             base_img = output_img
-            base_img_kp = cv2.perspectiveTransform(kp_left.reshape(-1, 1, 2), translation_matrix)
-            base_img_des = des_left
 
             print("LOG: Stitched Image {} to the base image".format(img_index))
 
@@ -77,6 +73,7 @@ class PanaromaStitcher():
             plt.show()
         
         stitched_image = base_img
+        print("-------------------------------------------")
         
         return stitched_image, homography_matrix_list 
 
