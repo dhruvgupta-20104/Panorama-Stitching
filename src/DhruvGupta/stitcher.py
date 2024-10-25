@@ -21,12 +21,12 @@ class PanaromaStitcher():
 
         homography_matrix_list = []
 
-        base_img = img_list[0]
+        base_img = img_list[-1]
 
-        for img_index in range(1, len(img_list)):
+        for img_index in range(len(img_list)-2, -1, -1):
 
-            right_img = img_list[img_index]
-            left_img = base_img
+            right_img = base_img
+            left_img = img_list[img_index]
 
             output_img, homography_matrix = self.stitch_images(left_img, right_img)
 
