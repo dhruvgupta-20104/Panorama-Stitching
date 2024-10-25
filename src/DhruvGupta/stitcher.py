@@ -68,7 +68,7 @@ class PanaromaStitcher():
             output_img[-y_min:right_image_shape[0]-y_min, -x_min:right_image_shape[1]-x_min] = right_img
 
             base_img = output_img
-            base_img_kp = cv2.perpectiveTransform(kp_left.reshape(-1, 1, 2), translation_matrix)
+            base_img_kp = cv2.perspectiveTransform(kp_left.reshape(-1, 1, 2), translation_matrix)
             base_img_des = des_left
 
             print("LOG: Stitched Image {} to the base image".format(img_index))
