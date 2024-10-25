@@ -3,7 +3,6 @@ import cv2
 import os
 import numpy as np
 import random
-import matplotlib.pyplot as plt
 
 class PanaromaStitcher():
     def __init__(self):
@@ -33,34 +32,25 @@ class PanaromaStitcher():
 
             base_img = output_img
             homography_matrix_list.append(homography_matrix)
-
-            plt.imshow(base_img)
-            plt.show()
         
         stitched_image = base_img
         
         return stitched_image, homography_matrix_list 
     
     def stictch_images(self, left_img, right_img):
-        print("-------------------------------------------")
-
         kp_left, des_left = self.get_keypoints(left_img)
         kp_right, des_right = self.get_keypoints(right_img)
-        print("LOG: Got Keypoints")
 
         matched_points = self.get_matched_points(kp_left, des_left, kp_right, des_right)
-        print("LOG: Got Matched Points")
 
         homography_matrix = self.ransac(matched_points)
-        print("LOG: Got Homography Matrix")
 
         right_image_shape = right_img.shape
         left_image_shape = left_img.shape
 
         left_image_corners = np.float32([[0, 0], [0, left_image_shape[0]], [left_image_shape[1], left_image_shape[0]], [left_image_shape[1], 0]]).reshape(-1, 1, 2)
         right_image_corners = np.float32([[0, 0], [0, right_image_shape[0]], [right_image_shape[1], right_image_shape[0]], [right_image_shape[1], 0]]).reshape(-1, 1, 2)
-
-        left_image_corners = cv2.perspectiveTransform(left_image_corners, homography_matrix)
+        left_image_corners = self.perspective_transform(left_image_corners, homography_matrix)
 
         list_of_points = np.concatenate((left_image_corners, right_image_corners), axis=0)
 
@@ -69,10 +59,8 @@ class PanaromaStitcher():
 
         translation_matrix = (np.array([[1, 0, -x_min], [0, 1, -y_min], [0, 0, 1]])).dot(homography_matrix)
 
-        output_img = cv2.warpPerspective(left_img, translation_matrix, (x_max-x_min, y_max-y_min))
+        output_img = self.wrap_perspective(left_img, translation_matrix, (y_max-y_min, x_max-x_min,3))
         output_img[-y_min:right_image_shape[0]-y_min, -x_min:right_image_shape[1]-x_min] = right_img
-
-        print("-------------------------------------------")
 
         return output_img, homography_matrix
 
@@ -111,7 +99,7 @@ class PanaromaStitcher():
                 left_image_point = np.array([match[0][0], match[0][1], 1])
                 right_image_point = np.array([match[1][0], match[1][1], 1])
                 predicted_right_image_point = np.dot(homography_matrix, left_image_point)
-                # predicted_right_image_point /= predicted_right_image_point[2]
+                predicted_right_image_point /= predicted_right_image_point[2]
                 if np.linalg.norm(right_image_point - predicted_right_image_point) < threshold:
                     num_inliers += 1
             if num_inliers > most_inliers:
@@ -129,5 +117,25 @@ class PanaromaStitcher():
         A = np.array(A)
         U, S, V = np.linalg.svd(A)
         H = V[-1].reshape(3, 3)
-        # H /= H[2, 2]
+        H /= H[2, 2]
         return H
+    
+    def perspective_transform(self, points, homography_matrix):
+        transformed_points = []
+        for point in points:
+            [x, y] = point[0]
+            [x_, y_, z_] = np.dot(homography_matrix, [x, y, 1])
+            transformed_points.append([[x_/z_, y_/z_]])
+        return np.float32(transformed_points)
+    
+    def wrap_perspective(self, img, homography_matrix, shape):
+        output_img = np.zeros(shape, dtype=np.uint8)
+        for i in range(img.shape[0]):
+            for j in range(img.shape[1]):
+                [x, y, z] = np.dot(homography_matrix, [j, i, 1])
+                x = int(x/z)
+                y = int(y/z)
+                if x < shape[1] and y < shape[0] and x >= 0 and y >= 0:
+                    output_img[y, x] = img[i, j]
+        return output_img        
+         
