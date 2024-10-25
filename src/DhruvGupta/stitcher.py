@@ -38,11 +38,6 @@ class PanaromaStitcher():
         return stitched_image, homography_matrix_list 
     
     def stitch_images(self, left_img, right_img):
-        target_size = (min(left_img.shape[0], right_img.shape[0]), min(left_img.shape[1], right_img.shape[1]))
-
-        left_img = cv2.resize(left_img, target_size)
-        right_img = cv2.resize(right_img, target_size)
-
         kp_left, des_left = self.get_keypoints(left_img)
         kp_right, des_right = self.get_keypoints(right_img)
 
