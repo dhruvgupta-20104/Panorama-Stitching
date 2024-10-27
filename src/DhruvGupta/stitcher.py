@@ -72,7 +72,7 @@ class PanaromaStitcher():
 
         translation_matrix = (np.array([[1, 0, -x_min], [0, 1, -y_min], [0, 0, 1]])).dot(homography_matrix)
 
-        output_img = self.optimized_wrap_perspective(left_img, translation_matrix, (y_max-y_min, x_max-x_min, 3))
+        output_img = self.wrap_perspective(left_img, translation_matrix, (y_max-y_min, x_max-x_min, 3))
         output_img[-y_min:right_image_shape[0]-y_min, -x_min:right_image_shape[1]-x_min] = right_img
 
         return output_img, homography_matrix
@@ -139,56 +139,22 @@ class PanaromaStitcher():
             [x, y] = point[0]
             [x_, y_, z_] = np.dot(homography_matrix, [x, y, 1])
             transformed_points.append([[x_/z_, y_/z_]])
-        return np.float32(transformed_points)
-    
+        return np.float32(transformed_points)    
+
     def wrap_perspective(self, img, homography_matrix, shape):
         output_img = np.zeros(shape, dtype=np.uint8)
-        for i in range(img.shape[0]):
-            for j in range(img.shape[1]):
-                [x, y, z] = np.dot(homography_matrix, [j, i, 1])
-                x = int(x/z)
-                y = int(y/z)
-                if x < shape[1] and y < shape[0] and x >= 0 and y >= 0:
-                    output_img[y, x] = img[i, j]
-        return output_img      
-
-        import numpy as np
-
-    def optimized_wrap_perspective(self, img, homography_matrix, shape):
-        # Create the output image
-        output_img = np.zeros(shape, dtype=np.uint8)
-
-        # Get the height and width of the input image
         h, w = img.shape[:2]
-
-        # Create a grid of coordinates representing the pixel positions
         x_coords, y_coords = np.meshgrid(np.arange(w), np.arange(h))
-
-        # Flatten the grid to create a list of pixel coordinates
         ones = np.ones_like(x_coords.flatten())
         pixel_coords = np.vstack([x_coords.flatten(), y_coords.flatten(), ones])
-
-        # Apply the homography transformation to the coordinates
         transformed_coords = np.dot(homography_matrix, pixel_coords)
-
-        # Normalize the coordinates by dividing by the third (z) coordinate
         transformed_coords /= transformed_coords[2, :]
-
-        # Round and convert to integer coordinates
         x_transformed = np.int32(transformed_coords[0, :])
         y_transformed = np.int32(transformed_coords[1, :])
-
-        # Create a mask to keep only valid transformed coordinates (within bounds)
-        valid_mask = (x_transformed >= 0) & (x_transformed < shape[1]) & \
-                    (y_transformed >= 0) & (y_transformed < shape[0])
-
-        # Apply the mask to keep only valid coordinates
+        valid_mask = (x_transformed >= 0) & (x_transformed < shape[1]) & (y_transformed >= 0) & (y_transformed < shape[0])
         x_valid = x_transformed[valid_mask]
         y_valid = y_transformed[valid_mask]
-
-        # Assign the corresponding pixels from the input image to the output image
         output_img[y_valid, x_valid] = img[y_coords.flatten()[valid_mask], x_coords.flatten()[valid_mask]]
-
         return output_img
   
          
