@@ -49,7 +49,7 @@ class PanaromaStitcher():
         
         # stitched_image = img_list[0]
 
-        # return stitched_image, homography_matrix_list 
+        return stitched_image, homography_matrix_list 
     
     def stitch_images(self, left_img, right_img, transform_left = True):
         kp_left, des_left = self.get_keypoints(left_img)
