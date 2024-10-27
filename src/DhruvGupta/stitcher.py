@@ -21,59 +21,67 @@ class PanaromaStitcher():
 
         homography_matrix_list = []
 
-        # base_img = img_list[-1]
+        base_img = img_list[-1]
 
-        # for img_index in range(len(img_list)-2, -1, -1):
+        for img_index in range(len(img_list)-2, -1, -1):
 
-        #     right_img = base_img
-        #     left_img = img_list[img_index]
+            right_img = base_img
+            left_img = img_list[img_index]
 
-        #     output_img, homography_matrix = self.stitch_images(left_img, right_img)
+            output_img, homography_matrix = self.stitch_images(left_img, right_img, False)
 
-        #     base_img = output_img
-        #     homography_matrix_list.append(homography_matrix)
+            base_img = output_img
+            homography_matrix_list.append(homography_matrix)
+            break
         
-        # stitched_image = base_img
+        stitched_image = base_img
 
-        while len(img_list) > 1:
-            new_img_list = []
-            for i in range(0, len(img_list), 2):
-                if i+1 >= len(img_list):
-                    new_img_list.append(img_list[i])
-                else:
-                    new_img, homography_matrix = self.stitch_images(img_list[i], img_list[i+1])
-                    new_img_list.append(new_img)
-                    homography_matrix_list.append(homography_matrix)
-            img_list = new_img_list
+        # while len(img_list) > 1:
+        #     new_img_list = []
+        #     for i in range(0, len(img_list), 2):
+        #         if i+1 >= len(img_list):
+        #             new_img_list.append(img_list[i])
+        #         else:
+        #             new_img, homography_matrix = self.stitch_images(img_list[i], img_list[i+1])
+        #             new_img_list.append(new_img)
+        #             homography_matrix_list.append(homography_matrix)
+        #     img_list = new_img_list
         
-        stitched_image = img_list[0]
+        # stitched_image = img_list[0]
 
-        return stitched_image, homography_matrix_list 
+        # return stitched_image, homography_matrix_list 
     
-    def stitch_images(self, left_img, right_img):
+    def stitch_images(self, left_img, right_img, transform_left = True):
         kp_left, des_left = self.get_keypoints(left_img)
         kp_right, des_right = self.get_keypoints(right_img)
 
         matched_points = self.get_matched_points(kp_left, des_left, kp_right, des_right)
 
-        homography_matrix = self.ransac(matched_points)
+        homography_matrix = self.ransac(matched_points, transform_left)
 
         right_image_shape = right_img.shape
         left_image_shape = left_img.shape
 
         left_image_corners = np.float32([[0, 0], [0, left_image_shape[0]], [left_image_shape[1], left_image_shape[0]], [left_image_shape[1], 0]]).reshape(-1, 1, 2)
         right_image_corners = np.float32([[0, 0], [0, right_image_shape[0]], [right_image_shape[1], right_image_shape[0]], [right_image_shape[1], 0]]).reshape(-1, 1, 2)
-        left_image_corners = self.perspective_transform(left_image_corners, homography_matrix)
-
+        
+        if transform_left:
+            left_image_corners = self.perspective_transform(left_image_corners, homography_matrix)
+        else:
+            right_image_corners = self.perspective_transform(right_image_corners, homography_matrix)
+            
         list_of_points = np.concatenate((left_image_corners, right_image_corners), axis=0)
 
         [x_min, y_min] = np.int32(list_of_points.min(axis=0).ravel() - 0.5)
         [x_max, y_max] = np.int32(list_of_points.max(axis=0).ravel() + 0.5)
 
-        translation_matrix = (np.array([[1, 0, -x_min], [0, 1, -y_min], [0, 0, 1]])).dot(homography_matrix)
-
-        output_img = self.wrap_perspective(left_img, translation_matrix, (y_max-y_min, x_max-x_min, 3))
-        output_img[-y_min:right_image_shape[0]-y_min, -x_min:right_image_shape[1]-x_min] = right_img
+        if transform_left:
+            translation_matrix = (np.array([[1, 0, -x_min], [0, 1, -y_min], [0, 0, 1]])).dot(homography_matrix)
+            output_img = self.wrap_perspective(left_img, translation_matrix, (y_max-y_min, x_max-x_min, 3))
+            output_img[-y_min:right_image_shape[0]-y_min, -x_min:right_image_shape[1]-x_min] = right_img
+        else:
+            output_img = self.wrap_perspective(right_img, homography_matrix, (y_max-y_min, x_max-x_min, 3))
+            output_img[:left_image_shape[0], :left_image_shape[1]] = left_img
 
         return output_img, homography_matrix
 
@@ -97,7 +105,7 @@ class PanaromaStitcher():
         return matches
 
     
-    def ransac(self, matches):
+    def ransac(self, matches, transform_left):
         most_inliers = 0
         best_homography_matrix = None
         threshold = 5
@@ -111,10 +119,16 @@ class PanaromaStitcher():
             for match in matches:
                 left_image_point = np.array([match[0][0], match[0][1], 1])
                 right_image_point = np.array([match[1][0], match[1][1], 1])
-                predicted_right_image_point = np.dot(homography_matrix, left_image_point)
-                predicted_right_image_point /= predicted_right_image_point[2]
-                if np.linalg.norm(right_image_point - predicted_right_image_point) < threshold:
-                    num_inliers += 1
+                if transform_left:
+                    predicted_right_image_point = np.dot(homography_matrix, left_image_point)
+                    predicted_right_image_point /= predicted_right_image_point[2]
+                    if np.linalg.norm(right_image_point - predicted_right_image_point) < threshold:
+                        num_inliers += 1
+                else:
+                    predicted_left_image_point = np.dot(homography_matrix, right_image_point)
+                    predicted_left_image_point /= predicted_left_image_point[2]
+                    if np.linalg.norm(left_image_point - predicted_left_image_point) < threshold:
+                        num_inliers += 1
             if num_inliers > most_inliers:
                 most_inliers = num_inliers
                 best_homography_matrix = homography_matrix
