@@ -72,7 +72,7 @@ class PanaromaStitcher():
 
         translation_matrix = (np.array([[1, 0, -x_min], [0, 1, -y_min], [0, 0, 1]])).dot(homography_matrix)
 
-        output_img = self.optimized_wrap_perspective(left_img, translation_matrix, (y_max-y_min, x_max-x_min,3))
+        output_img = self.optimized_wrap_perspective(left_img, translation_matrix, (y_max-y_min, x_max-x_min, 3))
         output_img[-y_min:right_image_shape[0]-y_min, -x_min:right_image_shape[1]-x_min] = right_img
 
         return output_img, homography_matrix
@@ -154,7 +154,7 @@ class PanaromaStitcher():
 
         import numpy as np
 
-    def optimized_wrap_perspective(img, homography_matrix, shape):
+    def optimized_wrap_perspective(self, img, homography_matrix, shape):
         # Create the output image
         output_img = np.zeros(shape, dtype=np.uint8)
 
