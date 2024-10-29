@@ -46,6 +46,8 @@ class PanaromaStitcher():
             num_images_stitched += 1
             transform_left = not transform_left
 
+        stitched_image = cv2.GaussianBlur(stitched_image, (5, 5), 0)
+
         return stitched_image, homography_matrix_list 
     
     def stitch_images(self, left_img, right_img, transform_left = True):
