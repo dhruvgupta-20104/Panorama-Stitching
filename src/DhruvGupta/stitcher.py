@@ -121,6 +121,8 @@ class PanaromaStitcher():
                 left_image_point = np.array([match[0][0], match[0][1], 1])
                 right_image_point = np.array([match[1][0], match[1][1], 1])
                 predicted_right_image_point = np.dot(homography_matrix, left_image_point)
+                if predicted_right_image_point[2] == 0:
+                    continue
                 predicted_right_image_point /= predicted_right_image_point[2]
                 if np.linalg.norm(right_image_point - predicted_right_image_point) < threshold:
                     num_inliers += 1
