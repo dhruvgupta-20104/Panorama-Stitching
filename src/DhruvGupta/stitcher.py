@@ -57,7 +57,8 @@ class PanaromaStitcher():
 
         matched_points = self.get_matched_points(kp_left, des_left, kp_right, des_right)
 
-        homography_matrix = self.ransac(matched_points, transform_left)
+        homography_matrix = self.ransac(matched_points)
+        inverse_homography_matrix = np.linalg.inv(homography_matrix)
 
         right_image_shape = right_img.shape
         left_image_shape = left_img.shape
@@ -68,7 +69,7 @@ class PanaromaStitcher():
         if transform_left:
             left_image_corners = self.perspective_transform(left_image_corners, homography_matrix)
         else:
-            right_image_corners = self.perspective_transform(right_image_corners, homography_matrix)
+            right_image_corners = self.perspective_transform(right_image_corners, inverse_homography_matrix)
             
         list_of_points = np.concatenate((left_image_corners, right_image_corners), axis=0)
 
@@ -80,8 +81,9 @@ class PanaromaStitcher():
             output_img = self.wrap_perspective(left_img, translation_matrix, (y_max-y_min, x_max-x_min, 3))
             output_img[-y_min:right_image_shape[0]-y_min, -x_min:right_image_shape[1]-x_min] = right_img
         else:
-            output_img = self.wrap_perspective(right_img, homography_matrix, (y_max-y_min, x_max-x_min, 3))
-            output_img[:left_image_shape[0], :left_image_shape[1]] = left_img
+            translation_matrix = (np.array([[1, 0, 0], [0, 1, -y_min], [0, 0, 1]])).dot(inverse_homography_matrix)
+            output_img = self.wrap_perspective(right_img, inverse_homography_matrix, (y_max-y_min, x_max-x_min, 3))
+            output_img[-y_min:left_image_shape[0]-y_min, :left_image_shape[1]] = left_img
 
         return output_img, homography_matrix
 
@@ -105,7 +107,7 @@ class PanaromaStitcher():
         return matches
 
     
-    def ransac(self, matches, transform_left):
+    def ransac(self, matches):
         most_inliers = 0
         best_homography_matrix = None
         threshold = 5
@@ -119,16 +121,10 @@ class PanaromaStitcher():
             for match in matches:
                 left_image_point = np.array([match[0][0], match[0][1], 1])
                 right_image_point = np.array([match[1][0], match[1][1], 1])
-                if transform_left:
-                    predicted_right_image_point = np.dot(homography_matrix, left_image_point)
-                    predicted_right_image_point /= predicted_right_image_point[2]
-                    if np.linalg.norm(right_image_point - predicted_right_image_point) < threshold:
-                        num_inliers += 1
-                else:
-                    predicted_left_image_point = np.dot(homography_matrix, right_image_point)
-                    predicted_left_image_point /= predicted_left_image_point[2]
-                    if np.linalg.norm(left_image_point - predicted_left_image_point) < threshold:
-                        num_inliers += 1
+                predicted_right_image_point = np.dot(homography_matrix, left_image_point)
+                predicted_right_image_point /= predicted_right_image_point[2]
+                if np.linalg.norm(right_image_point - predicted_right_image_point) < threshold:
+                    num_inliers += 1
             if num_inliers > most_inliers:
                 most_inliers = num_inliers
                 best_homography_matrix = homography_matrix
