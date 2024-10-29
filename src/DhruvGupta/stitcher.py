@@ -18,7 +18,7 @@ class PanaromaStitcher():
         for image in all_images:
             img = cv2.imread(image)
             original_height, original_width = img.shape[:2]
-            new_height = 400
+            new_height = 300
             new_width = int((new_height/original_height)*original_width)
             img = cv2.resize(img, (new_height, new_width))
             img_list.append(img)
@@ -48,11 +48,13 @@ class PanaromaStitcher():
 
         return stitched_image, homography_matrix_list 
     
-    def stitch_images(self, left_img, right_img, transform_left = True):
+    def stitch_images(self, left_img, right_img):
         kp_left, des_left = self.get_keypoints(left_img)
         kp_right, des_right = self.get_keypoints(right_img)
 
         matched_points = self.get_matched_points(kp_left, des_left, kp_right, des_right)
+
+        transform_left = self.find_image_order(matched_points, kp_left, kp_right)
 
         homography_matrix = self.ransac(matched_points)
         inverse_homography_matrix = np.linalg.inv(homography_matrix)
@@ -102,6 +104,21 @@ class PanaromaStitcher():
                 matches.append([kp_left[m.queryIdx].pt, kp_right[m.trainIdx].pt])
 
         return matches
+    
+    def find_image_order(self, matches, kp1, kp2):
+        # Calculate the average X position of the matching points in both images
+        img1_x_positions = [kp1[m.queryIdx].pt[0] for m in matches]  # Keypoint positions in img1
+        img2_x_positions = [kp2[m.trainIdx].pt[0] for m in matches]  # Keypoint positions in img2
+
+        # Calculate the average X coordinates of the matching points
+        avg_x_img1 = np.mean(img1_x_positions)
+        avg_x_img2 = np.mean(img2_x_positions)
+
+        # Determine which image is on the left or right
+        if avg_x_img1 < avg_x_img2:
+            return True
+        else:
+            return False
 
     
     def ransac(self, matches):
