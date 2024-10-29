@@ -17,6 +17,10 @@ class PanaromaStitcher():
 
         for image in all_images:
             img = cv2.imread(image)
+            original_height, original_width = img.shape[:2]
+            new_height = 600
+            new_width = int((new_height/original_height)*original_width)
+            img = cv2.resize(img, (new_height, new_width))
             img_list.append(img)
 
         homography_matrix_list = []
@@ -37,7 +41,7 @@ class PanaromaStitcher():
             else:
                 output_img, homography_matrix = self.stitch_images(stitched_image, img_list[index_right], transform_left)
                 index_right += 1
-            stitched_image = output_img
+            stitched_image = cv2.GaussianBlur(output_img, (5, 5), 0)
             homography_matrix_list.append(homography_matrix)
             num_images_stitched += 1
             transform_left = not transform_left
@@ -73,12 +77,12 @@ class PanaromaStitcher():
             translation_matrix = (np.array([[1, 0, -x_min], [0, 1, -y_min], [0, 0, 1]])).dot(homography_matrix)
             output_img = self.wrap_perspective(left_img, translation_matrix, (y_max-y_min, x_max-x_min, 3))
             output_img[-y_min:right_image_shape[0]-y_min, -x_min:right_image_shape[1]-x_min] = right_img
+            return output_img, homography_matrix
         else:
             translation_matrix = (np.array([[1, 0, 0], [0, 1, -y_min], [0, 0, 1]])).dot(inverse_homography_matrix)
             output_img = self.wrap_perspective(right_img, translation_matrix, (y_max-y_min, x_max-x_min, 3))
             output_img[-y_min:left_image_shape[0]-y_min, :left_image_shape[1]] = left_img
-
-        return output_img, homography_matrix
+            return output_img, inverse_homography_matrix
 
     def get_keypoints(self, img):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
