@@ -18,7 +18,7 @@ class PanaromaStitcher():
         for image in all_images:
             img = cv2.imread(image)
             original_height, original_width = img.shape[:2]
-            new_height = 500
+            new_height = 400
             new_width = int((new_height/original_height)*original_width)
             img = cv2.resize(img, (new_height, new_width))
             img_list.append(img)
@@ -75,15 +75,11 @@ class PanaromaStitcher():
 
         if transform_left:
             translation_matrix = (np.array([[1, 0, -x_min], [0, 1, -y_min], [0, 0, 1]])).dot(homography_matrix)
-            # if x_max == left_image_corners[0][2][0] or x_max==left_image_corners[0][3][0]:
-            #     translation_matrix = np.array([[1, 0, 0], [0, 1, -y_min], [0, 0, 1]])
             output_img = self.wrap_perspective(left_img, translation_matrix, (y_max-y_min, x_max-x_min, 3))
             output_img[-y_min:right_image_shape[0]-y_min, -x_min:right_image_shape[1]-x_min] = right_img
             return output_img, homography_matrix
         else:
             translation_matrix = (np.array([[1, 0, 0], [0, 1, -y_min], [0, 0, 1]])).dot(inverse_homography_matrix)
-            # if x_min == right_image_corners[0][0][0] or x_min==right_image_corners[0][1][0]:
-            #     translation_matrix = (np.array([[1, 0, -x_min], [0, 1, -y_min], [0, 0, 1]]))
             output_img = self.wrap_perspective(right_img, translation_matrix, (y_max-y_min, x_max-x_min, 3))
             output_img[-y_min:left_image_shape[0]-y_min, :left_image_shape[1]] = left_img
             return output_img, inverse_homography_matrix
