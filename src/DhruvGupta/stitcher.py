@@ -82,7 +82,7 @@ class PanaromaStitcher():
             output_img[-y_min:right_image_shape[0]-y_min, -x_min:right_image_shape[1]-x_min] = right_img
         else:
             translation_matrix = (np.array([[1, 0, 0], [0, 1, -y_min], [0, 0, 1]])).dot(inverse_homography_matrix)
-            output_img = self.wrap_perspective(right_img, inverse_homography_matrix, (y_max-y_min, x_max-x_min, 3))
+            output_img = self.wrap_perspective(right_img, translation_matrix, (y_max-y_min, x_max-x_min, 3))
             output_img[-y_min:left_image_shape[0]-y_min, :left_image_shape[1]] = left_img
 
         return output_img, homography_matrix
