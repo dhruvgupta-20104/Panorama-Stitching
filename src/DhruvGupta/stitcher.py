@@ -106,16 +106,12 @@ class PanaromaStitcher():
         return matches
     
     def find_image_order(self, matches, kp1, kp2):
-        # Calculate the average X position of the matching points in both images
-        print(matches)
-        img1_x_positions = [m[0][0] for m in matches]  # Keypoint positions in img1
-        img2_x_positions = [m[1][0] for m in matches]  # Keypoint positions in img2
+        img1_x_positions = [m[0][0] for m in matches]  
+        img2_x_positions = [m[1][0] for m in matches]  
 
-        # Calculate the average X coordinates of the matching points
         avg_x_img1 = np.mean(img1_x_positions)
         avg_x_img2 = np.mean(img2_x_positions)
 
-        # Determine which image is on the left or right
         if avg_x_img1 < avg_x_img2:
             return True
         else:
