@@ -54,7 +54,7 @@ class PanaromaStitcher():
 
         matched_points = self.get_matched_points(kp_left, des_left, kp_right, des_right)
 
-        if not self.check_order(matched_points, kp_left, kp_right):
+        if not self.check_order(matched_points):
             left_img, right_img = right_img, left_img
             matched_points[:, [0, 1]] = matched_points[:, [1, 0]]
 
@@ -107,12 +107,10 @@ class PanaromaStitcher():
 
         return np.array(matches)
     
-    def check_order(self, matches, kp1, kp2):
-        img1_x_positions = [m[0][0] for m in matches]  
-        img2_x_positions = [m[1][0] for m in matches]  
+    def check_order(self, matches): 
 
-        avg_x_img1 = np.mean(img1_x_positions)
-        avg_x_img2 = np.mean(img2_x_positions)
+        avg_x_img1 = np.mean(matches[:, 0, 0])
+        avg_x_img2 = np.mean(matches[:, 1, 0])
 
         if avg_x_img1 < avg_x_img2:
             return True
