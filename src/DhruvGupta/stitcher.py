@@ -166,7 +166,7 @@ class PanaromaStitcher():
         return np.float32(transformed_points)    
 
     def wrap_perspective(self, img, homography_matrix, shape):
-        output_img = np.zeros(shape, dtype=np.uint8)
+        output_img = np.full(shape, 255, dtype=np.uint8)
         h, w = img.shape[:2]
         x_coords, y_coords = np.meshgrid(np.arange(w), np.arange(h))
         ones = np.ones_like(x_coords.flatten())
@@ -185,6 +185,7 @@ class PanaromaStitcher():
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         _, mask = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY_INV)
         inpainted_image = cv2.inpaint(img, mask, inpaintRadius=3, flags=cv2.INPAINT_TELEA)
+        inpainted_image[inpainted_image == 255] = 0
         return cv2.GaussianBlur(inpainted_image, (5, 5), 0)
   
          
