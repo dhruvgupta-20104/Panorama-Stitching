@@ -36,10 +36,10 @@ class PanaromaStitcher():
 
         while num_images_stitched!=len(img_list):
             if transform_left:
-                output_img, homography_matrix = self.stitch_images(img_list[index_left], stitched_image)
+                output_img, homography_matrix = self.stitch_images(img_list[index_left], stitched_image, transform_left)
                 index_left -= 1
             else:
-                output_img, homography_matrix = self.stitch_images(stitched_image, img_list[index_right])
+                output_img, homography_matrix = self.stitch_images(stitched_image, img_list[index_right], transform_left)
                 index_right += 1
             stitched_image = cv2.GaussianBlur(output_img, (5, 5), 0)
             homography_matrix_list.append(homography_matrix)
@@ -48,13 +48,15 @@ class PanaromaStitcher():
 
         return stitched_image, homography_matrix_list 
     
-    def stitch_images(self, left_img, right_img):
+    def stitch_images(self, left_img, right_img, transform_left):
         kp_left, des_left = self.get_keypoints(left_img)
         kp_right, des_right = self.get_keypoints(right_img)
 
         matched_points = self.get_matched_points(kp_left, des_left, kp_right, des_right)
 
-        transform_left = self.find_image_order(matched_points, kp_left, kp_right)
+        if not self.find_image_order(matched_points, kp_left, kp_right):
+            left_img, right_img = right_img, left_img
+            matched_points[:, [0, 1]] = matched_points[:, [1, 0]]
 
         homography_matrix = self.ransac(matched_points)
         inverse_homography_matrix = np.linalg.inv(homography_matrix)
