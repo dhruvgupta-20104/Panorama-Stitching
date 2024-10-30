@@ -54,9 +54,9 @@ class PanaromaStitcher():
 
         matched_points = self.get_matched_points(kp_left, des_left, kp_right, des_right)
 
-        # if not self.find_image_order(matched_points, kp_left, kp_right):
-        #     left_img, right_img = right_img, left_img
-        #     matched_points[:, [0, 1]] = matched_points[:, [1, 0]]
+        if not self.check_order(matched_points, kp_left, kp_right):
+            left_img, right_img = right_img, left_img
+            matched_points[:, [0, 1]] = matched_points[:, [1, 0]]
 
         homography_matrix = self.ransac(matched_points)
         inverse_homography_matrix = np.linalg.inv(homography_matrix)
@@ -107,7 +107,7 @@ class PanaromaStitcher():
 
         return np.array(matches)
     
-    def find_image_order(self, matches, kp1, kp2):
+    def check_order(self, matches, kp1, kp2):
         img1_x_positions = [m[0][0] for m in matches]  
         img2_x_positions = [m[1][0] for m in matches]  
 
