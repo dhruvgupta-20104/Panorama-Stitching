@@ -123,7 +123,7 @@ class PanaromaStitcher():
         most_inliers = 0
         best_homography_matrix = None
         threshold = 5
-        num_trials = 5000
+        num_trials = 2500
         sample_size = 4
 
         for i in range(num_trials):
