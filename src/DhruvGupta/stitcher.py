@@ -140,7 +140,7 @@ class PanaromaStitcher():
         most_inliers = 0
         best_homography_matrix = None
         threshold = 5
-        num_trials = 2500
+        num_trials = 5000
         sample_size = 4
 
         for i in range(num_trials):
@@ -203,7 +203,7 @@ class PanaromaStitcher():
         black_mask = cv2.inRange(image, (0, 0, 0), (0, 0, 0))
         non_black_mask = cv2.inRange(image, (1, 1, 1), (255, 255, 255))
         kernel = np.ones((15, 15), np.uint8)
-        dilated_non_black_mask = cv2.dilate(non_black_mask, kernel, iterations=2)
+        dilated_non_black_mask = cv2.dilate(non_black_mask, kernel, iterations=1)
         inpaint_mask = cv2.bitwise_and(black_mask, dilated_non_black_mask)
         inpainted_image = cv2.inpaint(image, inpaint_mask, inpaintRadius=3, flags=cv2.INPAINT_TELEA)
         coords = np.argwhere(dilated_non_black_mask)
