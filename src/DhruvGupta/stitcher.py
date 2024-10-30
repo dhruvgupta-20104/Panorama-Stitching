@@ -41,7 +41,7 @@ class PanaromaStitcher():
             else:
                 output_img, homography_matrix = self.stitch_images(stitched_image, img_list[index_right], transform_left)
                 index_right += 1
-            stitched_image = cv2.GaussianBlur(output_img, (5, 5), 0)
+            stitched_image = self.format_image(output_img)
             homography_matrix_list.append(homography_matrix)
             num_images_stitched += 1
             transform_left = not transform_left
@@ -179,5 +179,11 @@ class PanaromaStitcher():
         y_valid = y_transformed[valid_mask]
         output_img[y_valid, x_valid] = img[y_coords.flatten()[valid_mask], x_coords.flatten()[valid_mask]]
         return output_img
+    
+    def format_image(self, img):
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        _, mask = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY_INV)
+        inpainted_image = cv2.inpaint(img, mask, inpaintRadius=3, flags=cv2.INPAINT_TELEA)
+        return cv2.GaussianBlur(inpainted_image, (5, 5), 0)
   
          
