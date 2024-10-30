@@ -186,8 +186,9 @@ class PanaromaStitcher():
         pixel_coords = np.vstack([x_coords.flatten(), y_coords.flatten(), ones])
         transformed_coords = np.dot(homography_matrix, pixel_coords)
         transformed_coords /= transformed_coords[2, :]
-        x_transformed = np.int32(transformed_coords[0, :])
-        y_transformed = np.int32(transformed_coords[1, :])
+        valid_coords = np.isfinite(transformed_coords[0, :]) & np.isfinite(transformed_coords[1, :])
+        x_transformed = np.int32(transformed_coords[0, valid_coords])
+        y_transformed = np.int32(transformed_coords[1, valid_coords])
         valid_mask = (x_transformed >= 0) & (x_transformed < shape[1]) & (y_transformed >= 0) & (y_transformed < shape[0])
         x_valid = x_transformed[valid_mask]
         y_valid = y_transformed[valid_mask]
