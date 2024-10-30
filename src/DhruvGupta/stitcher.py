@@ -57,6 +57,7 @@ class PanaromaStitcher():
         if not self.check_order(matched_points):
             left_img, right_img = right_img, left_img
             matched_points[:, [0, 1]] = matched_points[:, [1, 0]]
+            transform_left = not transform_left
 
         homography_matrix = self.ransac(matched_points)
         inverse_homography_matrix = np.linalg.inv(homography_matrix)
