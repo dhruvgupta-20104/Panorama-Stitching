@@ -45,7 +45,7 @@ class PanaromaStitcher():
                     break
                 output_img, homography_matrix, transform_left = self.stitch_images(stitched_image, img_list[index_right], transform_left)
                 index_right += 1
-            stitched_image = self.format_image(output_img, num_images_stitched+1==len(img_list)
+            stitched_image = self.format_image(output_img, num_images_stitched+1==len(img_list))
             homography_matrix_list.append(homography_matrix)
             num_images_stitched += 1
 
