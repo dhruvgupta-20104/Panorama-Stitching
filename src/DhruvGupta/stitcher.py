@@ -202,7 +202,7 @@ class PanaromaStitcher():
     def format_image(self, image):
         black_mask = cv2.inRange(image, (0, 0, 0), (0, 0, 0))
         non_black_mask = cv2.inRange(image, (1, 1, 1), (255, 255, 255))
-        kernel = np.ones((15, 15), np.uint8)
+        kernel = np.ones((10, 10), np.uint8)
         dilated_non_black_mask = cv2.dilate(non_black_mask, kernel, iterations=1)
         inpaint_mask = cv2.bitwise_and(black_mask, dilated_non_black_mask)
         inpainted_image = cv2.inpaint(image, inpaint_mask, inpaintRadius=3, flags=cv2.INPAINT_TELEA)
