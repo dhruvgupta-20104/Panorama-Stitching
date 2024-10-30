@@ -35,13 +35,14 @@ class PanaromaStitcher():
         index_right = mid_image + 1
 
         while num_images_stitched!=len(img_list):
+            stitched_image = self.format_image(stitched_image)
             if transform_left:
                 output_img, homography_matrix = self.stitch_images(img_list[index_left], stitched_image, transform_left)
                 index_left -= 1
             else:
                 output_img, homography_matrix = self.stitch_images(stitched_image, img_list[index_right], transform_left)
                 index_right += 1
-            stitched_image = self.format_image(output_img)
+            stitched_image = output_img
             homography_matrix_list.append(homography_matrix)
             num_images_stitched += 1
             transform_left = not transform_left
