@@ -141,7 +141,7 @@ class PanaromaStitcher():
         best_homography_matrix = None
         threshold = 5
         num_trials = 5000
-        sample_size = 4
+        sample_size = 6
 
         for i in range(num_trials):
             random_pts = random.choices(matches, k=sample_size)
