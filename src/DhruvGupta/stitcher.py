@@ -45,7 +45,7 @@ class PanaromaStitcher():
                     break
                 output_img, homography_matrix, transform_left = self.stitch_images(stitched_image, img_list[index_right], transform_left)
                 index_right += 1
-            stitched_image = self.format_image(output_img)
+            stitched_image = self.format_image(output_img, num_images_stitched+1==len(img_list)
             homography_matrix_list.append(homography_matrix)
             num_images_stitched += 1
 
@@ -53,13 +53,13 @@ class PanaromaStitcher():
             if index_left>=0:
                 for i in range(index_left, -1, -1):
                     output_img, homography_matrix, transform_left = self.stitch_images(img_list[i], stitched_image, transform_left)
-                    stitched_image = self.format_image(output_img)
+                    stitched_image = self.format_image(output_img, num_images_stitched+1==len(img_list))
                     homography_matrix_list.append(homography_matrix)
                     num_images_stitched += 1
             else:
                 for i in range(index_right, len(img_list)):
                     output_img, homography_matrix, transform_left = self.stitch_images(stitched_image, img_list[i], transform_left)
-                    stitched_image = self.format_image(output_img)
+                    stitched_image = self.format_image(output_img, num_images_stitched+1==len(img_list))
                     homography_matrix_list.append(homography_matrix)
                     num_images_stitched += 1
 
@@ -199,13 +199,15 @@ class PanaromaStitcher():
         output_img[y_valid, x_valid] = img[y_coords.flatten()[valid_mask], x_coords.flatten()[valid_mask]]
         return output_img
     
-    def format_image(self, image):
+    def format_image(self, image, is_last):
         black_mask = cv2.inRange(image, (0, 0, 0), (0, 0, 0))
         non_black_mask = cv2.inRange(image, (1, 1, 1), (255, 255, 255))
         kernel = np.ones((15, 15), np.uint8)
         dilated_non_black_mask = cv2.dilate(non_black_mask, kernel, iterations=2)
         inpaint_mask = cv2.bitwise_and(black_mask, dilated_non_black_mask)
         inpainted_image = cv2.inpaint(image, inpaint_mask, inpaintRadius=3, flags=cv2.INPAINT_TELEA)
+        if not is_last:
+            return inpainted_image
         coords = np.argwhere(dilated_non_black_mask)
         y_min, x_min = coords.min(axis=0)
         y_max, x_max = coords.max(axis=0)
