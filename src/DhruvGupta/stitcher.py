@@ -18,7 +18,7 @@ class PanaromaStitcher():
         for image in all_images:
             img = cv2.imread(image)
             original_height, original_width = img.shape[:2]
-            new_height = 300
+            new_height = 200
             new_width = int((new_height/original_height)*original_width)
             img = cv2.resize(img, (new_height, new_width))
             img_list.append(img)
