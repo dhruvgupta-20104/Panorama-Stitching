@@ -105,7 +105,7 @@ class PanaromaStitcher():
             if m.distance < 0.75 * n.distance:
                 matches.append([kp_left[m.queryIdx].pt, kp_right[m.trainIdx].pt])
 
-        return matches
+        return np.array(matches)
     
     def find_image_order(self, matches, kp1, kp2):
         img1_x_positions = [m[0][0] for m in matches]  
