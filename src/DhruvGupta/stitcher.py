@@ -108,11 +108,10 @@ class PanaromaStitcher():
         return np.array(matches)
     
     def check_order(self, matches): 
-
         avg_x_img1 = np.mean(matches[:, 0, 0])
         avg_x_img2 = np.mean(matches[:, 1, 0])
 
-        if avg_x_img1 < avg_x_img2:
+        if avg_x_img1 > avg_x_img2:
             return True
         else:
             return False
