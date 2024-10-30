@@ -209,7 +209,7 @@ class PanaromaStitcher():
         coords = np.argwhere(dilated_non_black_mask)
         y_min, x_min = coords.min(axis=0)
         y_max, x_max = coords.max(axis=0)
-        cropped_image = image[y_min:y_max+1, x_min:x_max+1]
+        cropped_image = inpainted_image[y_min:y_max+1, x_min:x_max+1]
         return cropped_image
   
          
