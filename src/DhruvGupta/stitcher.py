@@ -35,17 +35,17 @@ class PanaromaStitcher():
         index_right = mid_image + 1
 
         while num_images_stitched!=len(img_list):
-            stitched_image = self.format_image(stitched_image)
             if transform_left:
                 output_img, homography_matrix = self.stitch_images(img_list[index_left], stitched_image, transform_left)
                 index_left -= 1
             else:
                 output_img, homography_matrix = self.stitch_images(stitched_image, img_list[index_right], transform_left)
                 index_right += 1
-            stitched_image = output_img
+            stitched_image = self.format_image(output_img)
             homography_matrix_list.append(homography_matrix)
             num_images_stitched += 1
             transform_left = not transform_left
+
 
         return stitched_image, homography_matrix_list 
     
@@ -166,7 +166,7 @@ class PanaromaStitcher():
         return np.float32(transformed_points)    
 
     def wrap_perspective(self, img, homography_matrix, shape):
-        output_img = np.full(shape, 255, dtype=np.uint8)
+        output_img = np.zeros(shape, dtype=np.uint8)
         h, w = img.shape[:2]
         x_coords, y_coords = np.meshgrid(np.arange(w), np.arange(h))
         ones = np.ones_like(x_coords.flatten())
@@ -181,11 +181,13 @@ class PanaromaStitcher():
         output_img[y_valid, x_valid] = img[y_coords.flatten()[valid_mask], x_coords.flatten()[valid_mask]]
         return output_img
     
-    def format_image(self, img):
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        _, mask = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY_INV)
-        inpainted_image = cv2.inpaint(img, mask, inpaintRadius=3, flags=cv2.INPAINT_TELEA)
-        inpainted_image[inpainted_image == 255] = 0
+    def format_image(self, image):
+        black_mask = cv2.inRange(image, (0, 0, 0), (0, 0, 0))
+        non_black_mask = cv2.inRange(image, (1, 1, 1), (255, 255, 255))
+        kernel = np.ones((5, 5), np.uint8)
+        dilated_non_black_mask = cv2.dilate(non_black_mask, kernel, iterations=1)
+        inpaint_mask = cv2.bitwise_and(black_mask, dilated_non_black_mask)
+        inpainted_image = cv2.inpaint(image, inpaint_mask, inpaintRadius=3, flags=cv2.INPAINT_TELEA)
         return cv2.GaussianBlur(inpainted_image, (5, 5), 0)
   
          
